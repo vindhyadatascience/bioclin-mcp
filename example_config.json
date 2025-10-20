@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "bioclin": {
+      "command": "python",
+      "args": ["/absolute/path/to/bioclin-mcp/bioclin_mcp_server.py"],
+      "env": {
+        "BIOCLIN_API_URL": "http://localhost:8000"
+      }
+    }
+  }
+}

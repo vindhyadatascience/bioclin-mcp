@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (not needed in container)
+*.md
+!README.md
+QUICKSTART.md
+SETUP.md
+
+# Testing
+test_*.py
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Examples
+example_*.py
+example_*.json
+
+# Environment files (use docker-compose env vars instead)
+.env
+.env.*
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Config files (use volumes if needed)
+claude-desktop-config.json
+*.toml

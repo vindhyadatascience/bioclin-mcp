@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "bioclin": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "bioclin-mcp:latest"
+      ]
+    }
+  }
+}

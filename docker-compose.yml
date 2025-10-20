@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  bioclin-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bioclin-mcp:latest
+    container_name: bioclin-mcp-server
+
+    # Environment variables
+    environment:
+      - BIOCLIN_API_URL=${BIOCLIN_API_URL:-https://bioclin.vindhyadatascience.com/api/v1}
+
+    # Use stdin/stdout for MCP protocol
+    stdin_open: true
+    tty: true
+
+    # Network mode to access host services (e.g., Bioclin API on localhost)
+    network_mode: host
+
+    # Optional: Mount volumes for persistence or configuration
+    # volumes:
+    #   - ./config:/app/config
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Optional: Separate network for multi-container setups
+# networks:
+#   bioclin-network:
+#     driver: bridge
