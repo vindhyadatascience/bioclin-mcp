@@ -1,280 +1,370 @@
 # Cloud Run Deployment Scripts
 
-This directory contains scripts for deploying the MCPX Bioclin server to Google Cloud Run.
+**Deploy MCPX + Bioclin to Google Cloud so you can access it from anywhere!**
 
-## Prerequisites
+## What is This?
 
-1. **Google Cloud SDK** installed and configured
-   ```bash
-   gcloud init
-   gcloud auth login
-   ```
+These scripts help you deploy your MCPX + Bioclin setup to **Google Cloud Run** - a serverless platform that:
 
-2. **Docker** installed and running
+- ✅ Makes your deployment accessible from anywhere on the internet
+- ✅ Scales automatically based on usage (even to zero when not in use!)
+- ✅ Only charges you for what you use
+- ✅ Handles all the infrastructure for you
 
-3. **GCP Project** with billing enabled
+**Think of it as:** Moving your local MCPX setup to the cloud, so you and your team can access it from anywhere.
 
-4. **Environment variables** set:
-   ```bash
-   export GCP_PROJECT_ID="your-gcp-project-id"
-   export GCP_REGION="us-central1"  # optional, defaults to us-central1
-   ```
+## Before You Start
 
-## Deployment Steps
+### What You Need
 
-### Step 1: Setup GCP Secrets (One-time)
+1. **Google Cloud Account**
+   - Sign up at https://cloud.google.com
+   - Free trial includes $300 credit!
+   - Create a project: https://console.cloud.google.com/projectcreate
 
-This creates secrets in Google Secret Manager for OAuth credentials:
+2. **Google Cloud SDK** (command-line tools)
+   - Download: https://cloud.google.com/sdk/docs/install
+   - After installing, run:
+     ```bash
+     gcloud init
+     gcloud auth login
+     ```
+
+3. **Docker Desktop** running on your computer
+   - Already have this if you ran MCPX locally!
+
+4. **Bioclin Account**
+   - Your username and password for https://bioclin.vindhyadatascience.com
+
+### Set Your Project
+
+Before running any commands, tell Google Cloud which project to use:
 
 ```bash
-./deploy/setup-gcp-secrets.sh
+export GCP_PROJECT_ID="your-project-id"
+gcloud config set project $GCP_PROJECT_ID
 ```
 
-You'll be prompted to enter:
-- Auth0 Domain
-- Auth0 Client ID
-- Auth0 Client Secret
+**Where do I find my project ID?** Go to https://console.cloud.google.com and look at the top of the page.
 
-**Note:** You can skip this if deploying without authentication initially.
+## 🚀 Quick Deployment (No Auth)
 
-### Step 2: Deploy to Cloud Run
-
-This builds the Docker image and deploys to Cloud Run:
+**Want to deploy as quickly as possible?** Start without authentication:
 
 ```bash
 ./deploy/deploy-cloudrun.sh
 ```
 
-The script will:
-1. Build the Docker image
-2. Push to Google Container Registry
-3. Deploy to Cloud Run
-4. Configure secrets and environment variables
-5. Output the service URL
+**What this does:**
+1. Builds a Docker image with MCPX + Bioclin
+2. Uploads it to Google Container Registry
+3. Deploys to Cloud Run
+4. Shows you the public URL
 
-### Step 3: Test the Deployment
+**Wait time:** 3-5 minutes ☕
 
-After deployment, test the service:
+**You'll see:**
+```
+Deploying to Cloud Run...
+✅ Deployment successful!
+
+Service URL: https://mcpx-bioclin-xxxxx-uc.a.run.app
+
+Test it:
+  TOKEN=$(gcloud auth print-identity-token)
+  curl -X POST https://mcpx-bioclin-xxxxx-uc.a.run.app/mcp \
+    -H "Authorization: Bearer $TOKEN" \
+    -d '{"method": "tools/list"}'
+```
+
+## 🔒 Production Deployment (With Auth)
+
+For production use, add OAuth authentication:
+
+### Step 1: Setup OAuth Secrets
+
+First, create an Auth0 account (or use Google OAuth):
+- Sign up at https://auth0.com
+- Create an API with identifier `mcpx-bioclin`
+- Get your domain, client ID, and client secret
+
+Then run:
+```bash
+./deploy/setup-gcp-secrets.sh
+```
+
+**You'll be prompted for:**
+- Auth0 Domain (like `your-app.auth0.com`)
+- Auth0 Client ID (long alphanumeric string)
+- Auth0 Client Secret (another long string)
+
+**What this does:** Stores your OAuth credentials securely in Google Secret Manager.
+
+### Step 2: Enable Auth in Config
+
+Edit `mcpx-config/app.yaml` and change:
+```yaml
+auth:
+  enabled: false
+```
+
+To:
+```yaml
+auth:
+  enabled: true
+  provider: auth0
+  config:
+    domain: "${AUTH0_DOMAIN}"
+    clientId: "${AUTH0_CLIENT_ID}"
+    clientSecret: "${AUTH0_CLIENT_SECRET}"
+    audience: "mcpx-bioclin"
+```
+
+### Step 3: Deploy
 
 ```bash
-# Get identity token
-export TOKEN=$(gcloud auth print-identity-token)
+./deploy/deploy-cloudrun.sh
+```
 
-# List tools
-curl -X POST https://your-service.run.app/mcp \
+**Now your deployment requires OAuth tokens!** Much more secure for production use.
+
+## Testing Your Deployment
+
+### Step 1: Get Your Service URL
+
+After deployment, you'll see a URL like:
+```
+https://mcpx-bioclin-xxxxx-uc.a.run.app
+```
+
+Save it for easy access:
+```bash
+export MCPX_URL=$(gcloud run services describe mcpx-bioclin \
+  --region us-central1 \
+  --format 'value(status.url)')
+
+echo "Your MCPX URL: $MCPX_URL"
+```
+
+### Step 2: Test the Connection
+
+```bash
+# Get an authentication token
+TOKEN=$(gcloud auth print-identity-token)
+
+# List all Bioclin tools
+curl -X POST $MCPX_URL/mcp \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -H "x-lunar-consumer-tag: Test" \
-  -d '{"method": "tools/list"}'
+  -d '{"method": "tools/list"}' | jq .
+```
+
+**Expected:** A JSON response listing all 44 Bioclin tools!
+
+## Viewing Logs
+
+**See what's happening in real-time:**
+
+```bash
+gcloud run services logs tail mcpx-bioclin --region us-central1
+```
+
+**Check service status:**
+
+```bash
+gcloud run services describe mcpx-bioclin --region us-central1
+```
+
+## Updating Your Deployment
+
+### Changed Configuration?
+
+If you edited `mcpx-config/app.yaml` or `mcpx-config/mcp.json`:
+
+```bash
+./deploy/deploy-cloudrun.sh
+```
+
+This rebuilds and redeploys with your changes.
+
+### Changed OAuth Secrets?
+
+Update the secret in Google Cloud:
+
+```bash
+echo -n "new-secret-value" | \
+  gcloud secrets versions add auth0-client-secret --data-file=-
+```
+
+Then redeploy:
+
+```bash
+./deploy/deploy-cloudrun.sh
 ```
 
 ## Configuration Options
 
 ### Environment Variables
 
-Set these before running deployment scripts:
+Customize your deployment by setting these before running the script:
 
 ```bash
 # Required
 export GCP_PROJECT_ID="your-project-id"
 
-# Optional (with defaults)
-export GCP_REGION="us-central1"
-export SERVICE_NAME="mcpx-bioclin"
-export MEMORY="2Gi"
-export CPU="2"
-export MAX_INSTANCES="10"
-export BIOCLIN_API_URL="https://bioclin.vindhyadatascience.com/api/v1"
+# Optional (these have sensible defaults)
+export GCP_REGION="us-central1"          # Cloud Run region
+export SERVICE_NAME="mcpx-bioclin"        # Service name
+export MEMORY="2Gi"                       # Memory allocation
+export CPU="2"                            # CPU count
+export MAX_INSTANCES="10"                 # Max auto-scaling limit
 ```
 
-### Deployment Modes
-
-#### 1. Without Authentication (Development)
+**Example:** Deploy with less memory to save costs:
 ```bash
-# Just deploy without running setup-gcp-secrets.sh
+export MEMORY="1Gi"
+export CPU="1"
 ./deploy/deploy-cloudrun.sh
 ```
 
-Auth will be disabled by default in `mcpx-config/app.yaml`.
+## 💰 Cost Optimization
 
-#### 2. With Authentication (Production)
+**Good news:** Cloud Run is very affordable!
+
+### How You're Charged
+
+- **Only when in use** - Scales to zero when idle
+- **Based on requests** - Pay per API call
+- **Resource allocation** - More CPU/memory = higher cost
+
+### Save Money
+
+**1. Start with minimum resources:**
 ```bash
-# First, setup secrets
-./deploy/setup-gcp-secrets.sh
-
-# Then deploy
-./deploy/deploy-cloudrun.sh
+export MEMORY="1Gi"
+export CPU="1"
 ```
 
-Make sure `mcpx-config/app.yaml` has `auth.enabled: true`.
-
-## Updating the Deployment
-
-### Update Configuration Only
-
-If you only changed `mcpx-config/app.yaml` or `mcpx-config/mcp.json`:
-
+**2. Set a max instances limit:**
 ```bash
-./deploy/deploy-cloudrun.sh
+export MAX_INSTANCES="5"
 ```
+This prevents runaway costs from unexpected traffic spikes.
 
-This rebuilds and redeploys with the new config.
-
-### Update Secrets
-
-```bash
-# Update a specific secret
-echo -n "new-secret-value" | \
-  gcloud secrets versions add SECRET_NAME --data-file=-
-
-# Then redeploy to pick up new version
-./deploy/deploy-cloudrun.sh
-```
-
-## Monitoring and Debugging
-
-### View Logs
-
-```bash
-# Tail logs in real-time
-gcloud run services logs tail mcpx-bioclin --region us-central1
-
-# View logs in Cloud Console
-gcloud run services describe mcpx-bioclin --region us-central1
-```
-
-### Check Service Status
-
+**3. Monitor your usage:**
 ```bash
 gcloud run services describe mcpx-bioclin --region us-central1
 ```
 
-### Access MCPX Control Plane
+**Typical costs:** With low usage, expect $1-5/month. Heavy usage might be $20-50/month.
 
-The MCPX Control Plane UI is not exposed in Cloud Run by default for security.
-To access it:
-
-1. **Use Cloud Run Proxy:**
-   ```bash
-   gcloud run services proxy mcpx-bioclin --port=5173 --region=us-central1
-   ```
-   Then open http://localhost:5173
-
-2. **Or enable public access** (not recommended for production):
-   Deploy with `--allow-unauthenticated` flag (modify script)
-
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### "Permission denied" errors
 
-Ensure the service account has required roles:
+**Problem:** Service account doesn't have access to secrets
+
+**Fix:**
 ```bash
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
   --member="serviceAccount:mcpx-bioclin@${GCP_PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor"
 ```
 
-### "Image not found" errors
-
-Make sure you've pushed the image:
-```bash
-docker push gcr.io/${GCP_PROJECT_ID}/mcpx-bioclin:latest
-```
-
 ### "Service unhealthy" errors
 
-Check health endpoint:
-```bash
-curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
-  https://your-service.run.app/health
-```
+**Problem:** MCPX isn't starting correctly
 
-Check logs for startup errors:
+**Fix:** Check the logs:
 ```bash
 gcloud run services logs tail mcpx-bioclin --region us-central1
 ```
 
-### Authentication issues
+Look for error messages (usually in red).
 
-Verify secrets are accessible:
+### "Image not found" errors
+
+**Problem:** Docker image wasn't pushed to Container Registry
+
+**Fix:** Enable required APIs:
+```bash
+gcloud services enable run.googleapis.com
+gcloud services enable cloudbuild.googleapis.com
+gcloud services enable artifactregistry.googleapis.com
+```
+
+Then redeploy:
+```bash
+./deploy/deploy-cloudrun.sh
+```
+
+### Can't access tools
+
+**Problem:** Authentication not working
+
+**Fix:** Verify secrets are accessible:
 ```bash
 gcloud secrets list
 gcloud secrets versions access latest --secret=auth0-domain
 ```
 
-## Cost Optimization
+If secrets are missing, run `./deploy/setup-gcp-secrets.sh` again.
 
-Cloud Run pricing is based on:
-- CPU and memory allocation
-- Number of requests
-- Request duration
+## 🔒 Security Best Practices
 
-To optimize costs:
+When deploying to production:
 
-1. **Set min-instances to 0** (default in script)
-   - Service scales to zero when not in use
-   - Small cold start delay on first request
+✅ **Always enable authentication** - Edit `app.yaml` to set `auth.enabled: true`
+✅ **Use Secret Manager** - Never put passwords in code or config files
+✅ **Restrict access** - The default deployment requires authentication (good!)
+✅ **Monitor logs** - Check for suspicious activity regularly
+✅ **Rotate secrets** - Change OAuth credentials every 90 days
 
-2. **Adjust memory and CPU**
-   ```bash
-   export MEMORY="1Gi"  # Reduce if sufficient
-   export CPU="1"       # Reduce if sufficient
-   ```
+**Never do this:**
+❌ Don't disable authentication in production
+❌ Don't commit `.env` files to git
+❌ Don't share your OAuth credentials
 
-3. **Set appropriate max-instances**
-   ```bash
-   export MAX_INSTANCES="5"  # Lower limit prevents runaway costs
-   ```
-
-4. **Monitor usage**
-   ```bash
-   gcloud run services describe mcpx-bioclin \
-     --region us-central1 \
-     --format="value(status.traffic)"
-   ```
-
-## CI/CD Integration
-
-To integrate with Cloud Build:
-
-1. Create `cloudbuild.yaml`:
-   ```yaml
-   steps:
-     - name: 'gcr.io/cloud-builders/docker'
-       args: ['build', '-t', 'gcr.io/$PROJECT_ID/mcpx-bioclin', '-f', 'Dockerfile.mcpx-cloudrun', '.']
-     - name: 'gcr.io/cloud-builders/docker'
-       args: ['push', 'gcr.io/$PROJECT_ID/mcpx-bioclin']
-     - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-       entrypoint: gcloud
-       args:
-         - 'run'
-         - 'deploy'
-         - 'mcpx-bioclin'
-         - '--image=gcr.io/$PROJECT_ID/mcpx-bioclin'
-         - '--region=us-central1'
-         - '--platform=managed'
-   ```
-
-2. Trigger builds on git push:
-   ```bash
-   gcloud builds submit --config cloudbuild.yaml
-   ```
-
-## Security Best Practices
-
-✅ **Always use `--no-allow-unauthenticated`** (default in script)
-✅ **Store secrets in Secret Manager** (never in code or env vars)
-✅ **Enable auth in production** (`auth.enabled: true` in app.yaml)
-✅ **Use HTTPS only** (Cloud Run enforces this automatically)
-✅ **Rotate secrets regularly** (every 90 days)
-✅ **Monitor access logs** for suspicious activity
-✅ **Use VPC connector** if accessing private resources
-
-## Next Steps
+## What's Next?
 
 After successful deployment:
-1. ✅ Test the deployment with curl
-2. ⏭️ Configure chatbot client to use the Cloud Run URL
-3. ⏭️ Set up monitoring and alerting
-4. ⏭️ Configure custom domain (optional)
-5. ⏭️ Set up CI/CD pipeline (optional)
+
+1. ✅ **Test with curl** - Verify all 44 tools are accessible
+2. 🤖 **Update your chatbot** - Point it to the Cloud Run URL
+3. 📊 **Set up monitoring** - Track usage and errors
+4. 🌐 **Custom domain** (optional) - Use your own domain name
+5. 🔄 **CI/CD pipeline** (optional) - Auto-deploy on git push
+
+**Need help?** Check the main `TROUBLESHOOTING.md` guide!
+
+## Quick Reference
+
+### Useful Commands
+
+```bash
+# Deploy or update
+./deploy/deploy-cloudrun.sh
+
+# View logs
+gcloud run services logs tail mcpx-bioclin --region us-central1
+
+# Get service URL
+gcloud run services describe mcpx-bioclin --region us-central1 --format 'value(status.url)'
+
+# Delete deployment
+gcloud run services delete mcpx-bioclin --region us-central1
+
+# List all Cloud Run services
+gcloud run services list
+```
+
+### Default Resource Allocation
+
+- **Memory:** 2Gi
+- **CPU:** 2
+- **Max Instances:** 10
+- **Min Instances:** 0 (scales to zero)
+- **Region:** us-central1
+
+**Want to change these?** Set environment variables before deploying (see Configuration Options above).
