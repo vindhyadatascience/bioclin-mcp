@@ -1,0 +1,64 @@
+# Docker Compose for Testing Cloud Run Deployment Locally
+# This mimics the Cloud Run environment for local testing
+
+version: '3.8'
+
+services:
+  # MCPX Gateway Service
+  mcpx:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcpx-cloudrun
+    container_name: mcpx-gateway
+    ports:
+      - "9000:9000"  # MCPX HTTP API
+      - "5173:5173"  # MCPX Control Plane (optional)
+    environment:
+      # Bioclin API configuration
+      - BIOCLIN_API_URL=${BIOCLIN_API_URL:-https://bioclin.vindhyadatascience.com/api/v1}
+
+      # Auth configuration (set these in .env)
+      - AUTH0_DOMAIN=${AUTH0_DOMAIN:-}
+      - AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID:-}
+      - AUTH0_CLIENT_SECRET=${AUTH0_CLIENT_SECRET:-}
+
+      # MCPX configuration
+      - PORT=9000
+      - NODE_ENV=production
+      - CONFIG_PATH=/lunar/packages/mcpx-server/config
+
+    networks:
+      - mcpx-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Alternative: Separate Bioclin MCP Server (multi-container pattern)
+  # Uncomment this if you want to run Bioclin as a separate service
+  # bioclin:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.cloudrun
+  #   container_name: bioclin-mcp
+  #   environment:
+  #     - BIOCLIN_API_URL=${BIOCLIN_API_URL:-https://bioclin.vindhyadatascience.com/api/v1}
+  #     - PORT=8080
+  #   networks:
+  #     - mcpx-network
+  #   healthcheck:
+  #     test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: unless-stopped
+
+networks:
+  mcpx-network:
+    driver: bridge
+
+# Note: For actual Cloud Run deployment, we use a single container with sidecar pattern
+# This docker-compose file is for local testing only

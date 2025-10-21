@@ -1,0 +1,61 @@
+# Dockerfile for Bioclin MCP Server - Cloud Run Deployment
+# This is optimized for running in Google Cloud Run environment
+
+# Multi-stage build
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Final stage
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy Python dependencies from builder
+COPY --from=builder /root/.local /root/.local
+
+# Copy application files
+COPY bioclin_schemas.py .
+COPY bioclin_mcp_server.py .
+
+# Make scripts in PATH
+ENV PATH=/root/.local/bin:$PATH
+
+# Cloud Run specific configurations
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8080
+
+# Default Bioclin API URL (can be overridden by Cloud Run env var)
+ENV BIOCLIN_API_URL=https://bioclin.vindhyadatascience.com/api/v1
+
+# Health check for Cloud Run
+# Note: Cloud Run does its own health checking, but this helps with local testing
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD python -c "import bioclin_mcp_server; import bioclin_schemas" || exit 1
+
+# Make the server executable
+RUN chmod +x bioclin_mcp_server.py
+
+# Expose port (Cloud Run will inject PORT env var)
+EXPOSE 8080
+
+# Cloud Run runs as non-root user by default
+# Create a non-root user for security
+RUN useradd -m -u 1000 mcpuser && \
+    chown -R mcpuser:mcpuser /app
+
+USER mcpuser
+
+# Run the MCP server
+# Cloud Run expects the container to listen on $PORT
+CMD ["python", "bioclin_mcp_server.py"]

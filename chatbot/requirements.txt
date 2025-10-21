@@ -1,0 +1,12 @@
+# Bioclin Chatbot Client Dependencies
+
+# HTTP client with async support
+httpx>=0.25.0
+
+# Optional: For web framework integration
+# fastapi>=0.104.0
+# uvicorn>=0.24.0
+
+# Optional: For LangChain integration
+# langchain>=0.1.0
+# langchain-anthropic>=0.1.0

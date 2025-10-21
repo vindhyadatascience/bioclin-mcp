@@ -1,0 +1,47 @@
+# MCPX Configuration for Bioclin MCP Server
+# This file configures MCPX to act as a gateway/aggregator for the Bioclin MCP server
+
+# Permission configuration
+# Note: Simplified permissions without toolGroups for compatibility
+permissions:
+  # Allow all by default (disable auth for local testing)
+  default:
+    allow: []
+
+  # No tool groups - causes issues with MCPX
+  toolGroups: []
+
+  # Consumer-specific permissions
+  # List all tools explicitly to avoid wildcard issues
+  consumers: {}
+
+# Authentication configuration
+auth:
+  enabled: false  # Disabled for local testing
+  # When enabled, configure OAuth provider:
+  # provider: auth0  # Options: auth0, stytch, workos, google, custom
+  # config:
+  #   domain: "${AUTH0_DOMAIN}"
+  #   clientId: "${AUTH0_CLIENT_ID}"
+  #   clientSecret: "${AUTH0_CLIENT_SECRET}"
+  #   audience: "mcpx-bioclin"
+  #   scopes:
+  #     - "read:tools"
+  #     - "execute:tools"
+
+# Tool extensions (for custom functionality)
+toolExtensions:
+  services: {}
+
+# Environment configuration
+environment: development  # Change to 'production' for Cloud Run deployment
+
+# Server configuration
+server:
+  port: 9000
+  host: "0.0.0.0"
+
+# Logging configuration
+logging:
+  level: info  # Options: debug, info, warn, error
+  format: json  # Use JSON for Cloud Logging compatibility

@@ -59,8 +59,11 @@ build/
 
 # Docker
 docker-compose*.yml
-Dockerfile
 .dockerignore
+
+# Cloud Run specific - keep only the Dockerfile being built
+Dockerfile.mcpx-cloudrun
+Dockerfile.cloudrun
 
 # Config files (use volumes if needed)
 claude-desktop-config.json

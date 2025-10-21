@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "bioclin": {
+      "command": "python3",
+      "args": [
+        "/workspace/bioclin_mcp_server.py"
+      ],
+      "env": {
+        "BIOCLIN_API_URL": "https://bioclin.vindhyadatascience.com/api/v1"
+      },
+      "description": "Bioclin bioinformatics workflow management MCP server with 44 tools for user management, organizations, projects, runs, and analysis types"
+    }
+  }
+}

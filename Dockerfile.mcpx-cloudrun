@@ -1,0 +1,51 @@
+# Dockerfile for MCPX Gateway - Cloud Run Deployment
+# This container runs MCPX and can communicate with Bioclin MCP server
+
+FROM us-central1-docker.pkg.dev/prj-common-442813/mcpx/mcpx:latest
+
+# Set working directory
+WORKDIR /lunar/packages/mcpx-server
+
+# Copy MCPX configuration files
+COPY mcpx-config/app.yaml /lunar/packages/mcpx-server/config/app.yaml
+COPY mcpx-config/mcp.json /lunar/packages/mcpx-server/config/mcp.json
+
+# Cloud Run specific environment variables
+ENV PORT=9000
+ENV HOST=0.0.0.0
+ENV CONFIG_PATH=/lunar/packages/mcpx-server/config
+ENV NODE_ENV=production
+
+# For sidecar pattern: Bioclin MCP will run in same pod
+# Copy Bioclin MCP server files for local execution
+COPY bioclin_schemas.py /app/bioclin_schemas.py
+COPY bioclin_mcp_server.py /app/bioclin_mcp_server.py
+COPY requirements.txt /app/requirements.txt
+
+# Install Python and dependencies for running Bioclin MCP locally
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Bioclin MCP Python dependencies
+RUN pip3 install --no-cache-dir -r /app/requirements.txt
+
+# Update mcp.json to use local Python instead of Docker
+# This runs Bioclin MCP server directly in the same container (sidecar pattern)
+RUN sed -i 's/"command": "docker"/"command": "python3"/' /lunar/packages/mcpx-server/config/mcp.json && \
+    sed -i 's/"args": \[.*\]/"args": ["\/app\/bioclin_mcp_server.py"]/' /lunar/packages/mcpx-server/config/mcp.json
+
+# Health check endpoint
+# Cloud Run will check this to ensure the service is healthy
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:9000/health || exit 1
+
+# Expose ports
+# Cloud Run will route traffic to PORT (9000)
+EXPOSE 9000
+
+# Start MCPX
+# Cloud Run will inject environment variables for secrets
+CMD ["node", "dist/index.js"]

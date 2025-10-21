@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mcpx-bioclin": {
+      "command": "npx",
+      "args": [
+        "mcp-remote@0.1.21",
+        "http://localhost:9000/mcp",
+        "--header",
+        "x-lunar-consumer-tag: Claude"
+      ],
+      "description": "Bioclin MCP server via MCPX gateway (44 tools for bioinformatics workflow management)"
+    }
+  }
+}

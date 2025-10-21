@@ -1,0 +1,170 @@
+# MCPX Configuration for Bioclin MCP Server - WITH AUTHENTICATION
+# This file shows how to configure OAuth 2.1 authentication for production use
+# Copy relevant sections to app.yaml when ready to enable auth
+
+# Permission configuration
+permissions:
+  # Deny by default for security
+  default:
+    allow: []
+
+  # Consumer-specific permissions mapped to OAuth claims
+  consumers:
+    # Any authenticated user (matches OAuth 'sub' claim)
+    authenticated:
+      allow: ["bioclin:*"]  # Allow all Bioclin tools
+
+    # Specific user permissions (example)
+    # "auth0|123456":
+    #   allow: ["bioclin:read:*", "bioclin:create:*"]
+
+    # Admin users
+    admin:
+      allow: ["*"]  # Allow everything including MCPX admin operations
+
+  # Tool groups for fine-grained access control
+  toolGroups:
+    - name: "bioclin:read"
+      tools:
+        - "bioclin_get_*"
+        - "bioclin_list_*"
+      description: "Read-only Bioclin operations"
+
+    - name: "bioclin:write"
+      tools:
+        - "bioclin_create_*"
+        - "bioclin_update_*"
+        - "bioclin_delete_*"
+      description: "Write operations for Bioclin"
+
+    - name: "bioclin:auth"
+      tools:
+        - "bioclin_login"
+        - "bioclin_logout"
+        - "bioclin_refresh_token"
+        - "bioclin_validate_token"
+      description: "Bioclin authentication operations"
+
+# ============================================
+# Authentication Configuration - Auth0
+# ============================================
+auth:
+  enabled: true
+  provider: auth0
+
+  config:
+    # Auth0 tenant domain (e.g., dev-xxxxx.us.auth0.com)
+    domain: "${AUTH0_DOMAIN}"
+
+    # OAuth 2.1 client credentials
+    clientId: "${AUTH0_CLIENT_ID}"
+    clientSecret: "${AUTH0_CLIENT_SECRET}"
+
+    # API identifier (must match Auth0 API configuration)
+    audience: "mcpx-bioclin"
+
+    # Required scopes
+    scopes:
+      - "read:tools"      # List and view tools
+      - "execute:tools"   # Execute tools
+      - "read:profile"    # Read user profile
+
+    # Token validation
+    tokenValidation:
+      requireExp: true    # Require expiration claim
+      requireIat: true    # Require issued-at claim
+      clockTolerance: 60  # Allow 60 seconds clock skew
+
+    # JWKS caching (for token verification)
+    jwks:
+      cache: true
+      cacheMaxAge: 600000  # 10 minutes in milliseconds
+
+# ============================================
+# Alternative: Google OAuth Configuration
+# ============================================
+# auth:
+#   enabled: true
+#   provider: google
+#
+#   config:
+#     clientId: "${GOOGLE_CLIENT_ID}"
+#     clientSecret: "${GOOGLE_CLIENT_SECRET}"
+#     redirectUri: "${GOOGLE_REDIRECT_URI}"
+#
+#     # Hosted domain restriction (optional)
+#     # hostedDomain: "yourdomain.com"
+#
+#     scopes:
+#       - "openid"
+#       - "email"
+#       - "profile"
+
+# ============================================
+# Alternative: Custom OAuth 2.1 Server
+# ============================================
+# auth:
+#   enabled: true
+#   provider: custom
+#
+#   config:
+#     # OAuth 2.1 endpoints
+#     issuerUrl: "${OAUTH_ISSUER_URL}"
+#     authorizationEndpoint: "${OAUTH_ISSUER_URL}/authorize"
+#     tokenEndpoint: "${OAUTH_ISSUER_URL}/token"
+#     userInfoEndpoint: "${OAUTH_ISSUER_URL}/userinfo"
+#     jwksUri: "${OAUTH_ISSUER_URL}/.well-known/jwks.json"
+#
+#     # Client credentials
+#     clientId: "${OAUTH_CLIENT_ID}"
+#     clientSecret: "${OAUTH_CLIENT_SECRET}"
+#
+#     # Scopes
+#     scopes:
+#       - "openid"
+#       - "mcpx:tools"
+#
+#     # Claims mapping
+#     claimsMapping:
+#       userId: "sub"        # Map 'sub' claim to user ID
+#       consumerTag: "sub"   # Use 'sub' as consumer tag
+#       roles: "roles"       # Map 'roles' claim to roles
+
+# Tool extensions
+toolExtensions:
+  services: {}
+
+# Environment configuration
+environment: production  # Production mode with auth enabled
+
+# Server configuration
+server:
+  port: 9000
+  host: "0.0.0.0"
+
+  # CORS configuration (for web-based chatbots)
+  cors:
+    enabled: true
+    allowedOrigins:
+      - "https://your-chatbot-domain.com"
+      - "https://your-app-domain.com"
+    allowedMethods:
+      - "GET"
+      - "POST"
+      - "OPTIONS"
+    allowedHeaders:
+      - "Authorization"
+      - "Content-Type"
+      - "x-lunar-consumer-tag"
+    maxAge: 3600
+
+# Logging configuration
+logging:
+  level: info
+  format: json
+
+# Rate limiting (optional but recommended for production)
+rateLimit:
+  enabled: true
+  windowMs: 900000  # 15 minutes
+  maxRequests: 100  # 100 requests per window per consumer
