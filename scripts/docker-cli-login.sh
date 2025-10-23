@@ -7,6 +7,17 @@ echo "This will run the Bioclin auth script in Docker"
 echo "and save your session to ~/.bioclin_session.json"
 echo ""
 
+# Ensure session file exists (not a directory) before Docker mount
+# If it's a directory, remove it; if it doesn't exist, create empty file
+if [ -d ~/.bioclin_session.json ]; then
+    echo "⚠️  Removing incorrect directory at ~/.bioclin_session.json"
+    rm -rf ~/.bioclin_session.json
+fi
+
+if [ ! -f ~/.bioclin_session.json ]; then
+    touch ~/.bioclin_session.json
+fi
+
 # Run interactive Docker container with CLI login
 # Note: We use a custom Python script to auto-select option 2
 docker run -it --rm \

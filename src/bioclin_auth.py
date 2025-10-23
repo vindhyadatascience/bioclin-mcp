@@ -230,18 +230,30 @@ def login_browser():
         return login_cli()
 
 
-def login_cli():
+def login_cli(email=None, password=None):
     """
-    CLI-based login: Enter credentials in terminal
+    CLI-based login: Enter credentials in terminal or from arguments
 
     This is a fallback method if browser-based login doesn't work.
+
+    Args:
+        email: Email address (optional, will prompt if not provided)
+        password: Password (optional, will prompt if not provided)
     """
     print("🔐 Bioclin CLI Login")
     print("=" * 50)
 
     # Get credentials securely (password won't be echoed)
-    email = input("Email: ")
-    password = getpass.getpass("Password: ")
+    # Check environment variables first, then arguments, then prompt
+    if email is None:
+        email = os.environ.get("BIOCLIN_EMAIL")
+    if password is None:
+        password = os.environ.get("BIOCLIN_PASSWORD")
+
+    if email is None:
+        email = input("Email: ")
+    if password is None:
+        password = getpass.getpass("Password: ")
 
     # Login to Bioclin
     print("\nLogging in to Bioclin...")
@@ -387,15 +399,32 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Bioclin Authentication Helper")
         print("\nUsage:")
-        print("  python bioclin_auth.py login    - Securely login and store session")
-        print("  python bioclin_auth.py status   - Check login status")
-        print("  python bioclin_auth.py logout   - Remove stored session")
+        print("  python bioclin_auth.py login              - Interactive login (choose browser/CLI)")
+        print("  python bioclin_auth.py login --cli        - Direct CLI login (prompts for credentials)")
+        print("  python bioclin_auth.py login --browser    - Direct browser login")
+        print("  python bioclin_auth.py status             - Check login status")
+        print("  python bioclin_auth.py logout             - Remove stored session")
+        print("\nEnvironment variables (for Docker/automation):")
+        print("  BIOCLIN_EMAIL     - Email address")
+        print("  BIOCLIN_PASSWORD  - Password")
         sys.exit(1)
 
     command = sys.argv[1]
 
     if command == "login":
-        login_interactive()
+        # Check for flags
+        if len(sys.argv) > 2:
+            method = sys.argv[2]
+            if method == "--cli":
+                login_cli()
+            elif method == "--browser":
+                login_browser()
+            else:
+                print(f"❌ Unknown login method: {method}")
+                sys.exit(1)
+        else:
+            # Interactive mode
+            login_interactive()
     elif command == "status":
         status()
     elif command == "logout":

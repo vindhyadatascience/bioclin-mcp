@@ -17,12 +17,16 @@ cd bioclin-mcp
 docker build -t bioclin-mcp:latest .
 
 # 2. Authenticate (Docker CLI method)
-docker run -it --rm \
+# Option A: Interactive script (recommended)
+./docker-login.sh
+
+# Option B: Direct command with environment variables
+docker run --rm \
+  -e BIOCLIN_EMAIL="your@email.com" \
+  -e BIOCLIN_PASSWORD="your-password" \
   -v ~/.bioclin_session.json:/root/.bioclin_session.json \
   bioclin-mcp:latest \
-  sh -c "echo '2' | python src/bioclin_auth.py login"
-# Enter your email and password when prompted
-# Session saved to ~/.bioclin_session.json
+  python src/bioclin_auth.py login --cli
 
 # 3. Run with Docker Compose
 docker-compose up --build
@@ -302,11 +306,15 @@ Sessions are stored in `~/.bioclin_session.json`:
 ## Environment Variables
 
 ```bash
+# For Docker/automation (CLI login without prompts)
+export BIOCLIN_EMAIL="your@email.com"
+export BIOCLIN_PASSWORD="your-password"
+
 # Optional: Override default API URL
 export BIOCLIN_API_URL="https://your-instance.com/api/v1"
 ```
 
-Default: `https://bioclin.vindhyadatascience.com/api/v1`
+Default API URL: `https://bioclin.vindhyadatascience.com/api/v1`
 
 ## Troubleshooting
 
@@ -326,6 +334,19 @@ python src/bioclin_auth.py login  # Choose option 2
 ```bash
 # Sessions last 7 days - just log in again
 python src/bioclin_auth.py login
+```
+
+### Session file is a directory
+
+**Problem**: Docker creates `~/.bioclin_session.json` as a directory if it doesn't exist
+
+**Fix**:
+```bash
+# Remove the directory
+rm -rf ~/.bioclin_session.json
+
+# Use the helper script (it handles this automatically)
+./docker-login.sh
 ```
 
 ### MCP not connecting
