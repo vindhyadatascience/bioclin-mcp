@@ -8,25 +8,37 @@ A Model Context Protocol (MCP) server for the Bioclin bioinformatics API with **
 
 ### Option 1: Docker (Recommended) 🐳
 
+**Docker-only setup - no Python installation required!**
+
 ```bash
 # 1. Clone and build
 git clone https://github.com/vindhyadatascience/bioclin-mcp.git
 cd bioclin-mcp
+docker build -t bioclin-mcp:latest .
 
-# 2. Authenticate (on host machine)
-pip install playwright httpx
-playwright install chromium
-python src/bioclin_auth.py login
-# Browser opens → log in → session saved to ~/.bioclin_session.json
+# 2. Authenticate (Docker CLI method)
+docker run -it --rm \
+  -v ~/.bioclin_session.json:/root/.bioclin_session.json \
+  bioclin-mcp:latest \
+  sh -c "echo '2' | python src/bioclin_auth.py login"
+# Enter your email and password when prompted
+# Session saved to ~/.bioclin_session.json
 
-# 3. Build and run with Docker
+# 3. Run with Docker Compose
 docker-compose up --build
 
-# Or build manually:
-docker build -t bioclin-mcp:latest .
+# Or run manually:
 docker run -it --rm \
   -v ~/.bioclin_session.json:/root/.bioclin_session.json:ro \
   bioclin-mcp:latest
+```
+
+**Alternative: Browser-based login (requires Python on host)**
+```bash
+# If you prefer browser login, install Python deps on your Mac:
+pip install playwright httpx
+playwright install chromium
+python src/bioclin_auth.py login  # Browser opens
 ```
 
 ### Option 2: Local Python
