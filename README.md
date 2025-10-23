@@ -6,11 +6,36 @@ A Model Context Protocol (MCP) server for the Bioclin bioinformatics API with **
 
 ## Quick Start
 
+### Option 1: Docker (Recommended) 🐳
+
+```bash
+# 1. Clone and build
+git clone https://github.com/vindhyadatascience/bioclin-mcp.git
+cd bioclin-mcp
+
+# 2. Authenticate (on host machine)
+pip install playwright httpx
+playwright install chromium
+python bioclin_auth.py login
+# Browser opens → log in → session saved to ~/.bioclin_session.json
+
+# 3. Build and run with Docker
+docker-compose up --build
+
+# Or build manually:
+docker build -t bioclin-mcp:latest .
+docker run -it --rm \
+  -v ~/.bioclin_session.json:/root/.bioclin_session.json:ro \
+  bioclin-mcp:latest
+```
+
+### Option 2: Local Python
+
 ```bash
 # 1. Install
 git clone https://github.com/vindhyadatascience/bioclin-mcp.git
 cd bioclin-mcp
-pip install fastmcp httpx playwright
+pip install -r requirements.txt
 playwright install chromium
 
 # 2. Authenticate
@@ -19,9 +44,6 @@ python bioclin_auth.py login
 
 # 3. Run server
 fastmcp run bioclin_fastmcp.py
-
-# 4. Or use convenience script
-./run_bioclin.sh
 ```
 
 ## Features
@@ -80,6 +102,23 @@ Edit your Claude Desktop config:
 
 **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
 
+**Using Docker (Recommended)**:
+```json
+{
+  "mcpServers": {
+    "bioclin": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "${HOME}/.bioclin_session.json:/root/.bioclin_session.json:ro",
+        "bioclin-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+**Using Local Python**:
 ```json
 {
   "mcpServers": {

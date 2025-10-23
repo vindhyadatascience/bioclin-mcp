@@ -19,9 +19,9 @@ services:
     # Network mode to access host services (e.g., Bioclin API on localhost)
     network_mode: host
 
-    # Optional: Mount volumes for persistence or configuration
-    # volumes:
-    #   - ./config:/app/config
+    # Mount session file for authentication persistence
+    volumes:
+      - ~/.bioclin_session.json:/root/.bioclin_session.json:ro
 
     # Restart policy
     restart: unless-stopped
