@@ -8,10 +8,16 @@ echo "and save your session to ~/.bioclin_session.json"
 echo ""
 
 # Run interactive Docker container with CLI login
+# Note: We use a custom Python script to auto-select option 2
 docker run -it --rm \
   -v ~/.bioclin_session.json:/root/.bioclin_session.json \
   bioclin-mcp:latest \
-  sh -c "echo '2' | python src/bioclin_auth.py login"
+  python -c "
+import sys
+sys.path.insert(0, '/app/src')
+from bioclin_auth import login_cli
+login_cli()
+"
 
 if [ $? -eq 0 ]; then
   echo ""

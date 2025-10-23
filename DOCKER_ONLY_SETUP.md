@@ -24,10 +24,11 @@ docker build -t bioclin-mcp:latest .
 **This runs entirely in Docker - no browser, no host Python:**
 
 ```bash
+# Run this in your terminal (needs interactive TTY)
 docker run -it --rm \
   -v ~/.bioclin_session.json:/root/.bioclin_session.json \
   bioclin-mcp:latest \
-  sh -c "echo '2' | python src/bioclin_auth.py login"
+  python -c "import sys; sys.path.insert(0, '/app/src'); from bioclin_auth import login_cli; login_cli()"
 ```
 
 You'll be prompted for:
@@ -36,7 +37,7 @@ You'll be prompted for:
 
 Your session will be saved to `~/.bioclin_session.json` and last for 7 days.
 
-**Or use the helper script:**
+**Or use the helper script (run in a real terminal, not via Claude Code):**
 
 ```bash
 ./scripts/docker-cli-login.sh
