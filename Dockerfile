@@ -52,12 +52,11 @@ COPY --from=builder /root/.local /root/.local
 COPY --from=builder /root/.cache /root/.cache
 
 # Copy application files
-COPY bioclin_fastmcp.py .
-COPY bioclin_auth.py .
-COPY auto_browser_auth.py .
+COPY src/ /app/src/
 
 # Make sure scripts are in PATH
 ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Set Python to run in unbuffered mode
 ENV PYTHONUNBUFFERED=1
@@ -67,7 +66,7 @@ ENV BIOCLIN_API_URL=https://bioclin.vindhyadatascience.com/api/v1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import bioclin_fastmcp" || exit 1
+    CMD python -c "import sys; sys.path.insert(0, '/app'); import src.bioclin_fastmcp" || exit 1
 
 # Run the FastMCP server
-CMD ["fastmcp", "run", "bioclin_fastmcp.py"]
+CMD ["fastmcp", "run", "src/bioclin_fastmcp.py"]

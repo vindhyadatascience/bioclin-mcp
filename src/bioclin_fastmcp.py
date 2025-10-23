@@ -270,7 +270,7 @@ async def bioclin_browser_login_auto() -> dict:
         return {
             "status": "error",
             "message": f"Failed to start automated login: {str(e)}",
-            "fallback": "Try running manually in terminal: python bioclin_auth.py login"
+            "fallback": "Try running manually in terminal: python src/bioclin_auth.py login"
         }
 
 
@@ -302,7 +302,7 @@ async def bioclin_open_login(method: Optional[str] = "browser") -> dict:
                 "instructions": [
                     "1. Login to Bioclin with your credentials in the browser that just opened",
                     "2. After successful login, run the following command in your terminal:",
-                    "   python bioclin_auth.py login",
+                    "   python src/bioclin_auth.py login",
                     "   Then choose option 1 (Browser) and follow the prompts",
                     "3. Once complete, use 'bioclin_check_session' to verify your login",
                     "",
@@ -323,7 +323,7 @@ async def bioclin_open_login(method: Optional[str] = "browser") -> dict:
             return {
                 "status": "error",
                 "message": f"Authentication script not found at: {BIOCLIN_AUTH_SCRIPT}",
-                "instructions": "Please run manually: python bioclin_auth.py login"
+                "instructions": "Please run manually: python src/bioclin_auth.py login"
             }
 
         return {
@@ -355,7 +355,7 @@ async def bioclin_login(
     Login to Bioclin and obtain session credentials
 
     SECURITY NOTE: This method requires providing your password directly.
-    For better security, use: python bioclin_auth.py login
+    For better security, use: python src/bioclin_auth.py login
     This will securely store your session without exposing credentials to the LLM.
 
     Args:

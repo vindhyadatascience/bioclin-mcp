@@ -6,16 +6,17 @@ The Bioclin MCP server uses **automated browser-based authentication** with Play
 
 ```bash
 # Install Playwright
-pip install playwright playwright install chromium
+pip install playwright
+playwright install chromium
 
 # Login
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 
 # Choose option 1 (Browser) - a browser will open, log in normally
 # Your session will be captured automatically!
 
 # Check status
-python bioclin_auth.py status
+python src/bioclin_auth.py status
 ```
 
 ## How It Works
@@ -23,7 +24,7 @@ python bioclin_auth.py status
 ### 1. Standalone Usage
 
 ```bash
-$ python bioclin_auth.py login
+$ python src/bioclin_auth.py login
 Choose login method:
   1. Browser (recommended) - Automated login with browser window
   2. CLI - Enter credentials securely in terminal
@@ -72,7 +73,7 @@ await bioclin_browser_login_auto()
 terminal_cmd = '''
     tell application "Terminal"
         activate
-        do script "python bioclin_auth.py login"
+        do script "python src/bioclin_auth.py login"
     end tell
 '''
 ```
@@ -81,7 +82,7 @@ terminal_cmd = '''
 ```python
 # Detached subprocess with visible GUI
 process = await asyncio.create_subprocess_shell(
-    'python bioclin_auth.py login',
+    'python src/bioclin_auth.py login',
     start_new_session=True
 )
 ```
@@ -125,7 +126,7 @@ Sessions are stored securely in `~/.bioclin_session.json`:
 - Requires Playwright
 
 ```bash
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 # Choose option 1
 ```
 
@@ -139,7 +140,7 @@ python bioclin_auth.py login
 - ❌ Must enter credentials in terminal
 
 ```bash
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 # Choose option 2
 # Enter email and password
 ```
@@ -161,13 +162,13 @@ response = httpx.post(
 
 ```bash
 # Login
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 
 # Check session status
-python bioclin_auth.py status
+python src/bioclin_auth.py status
 
 # Logout (clear session)
-python bioclin_auth.py logout
+python src/bioclin_auth.py logout
 ```
 
 ## Troubleshooting
@@ -181,7 +182,7 @@ pip show playwright
 playwright install chromium
 
 # Try CLI method instead
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 # Choose option 2
 ```
 
@@ -194,7 +195,7 @@ ls -la ~/.bioclin_session.json
 cat ~/.bioclin_session.json
 
 # Check status
-python bioclin_auth.py status
+python src/bioclin_auth.py status
 ```
 
 ### Terminal window doesn't open (macOS)
@@ -203,14 +204,14 @@ python bioclin_auth.py status
 osascript -e 'tell app "Terminal" to activate'
 
 # Run manually instead
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 ```
 
 ### Session expired
 ```bash
 # Sessions expire after 7 days
 # Just log in again
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 ```
 
 ## Security Features
@@ -251,14 +252,14 @@ pip install playwright httpx
 playwright install chromium
 
 # 2. Login
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 
 # 3. Choose Browser (option 1)
 # 4. Browser opens, log in
 # 5. Session saved automatically
 
 # 6. Verify
-python bioclin_auth.py status
+python src/bioclin_auth.py status
 # ✅ Logged in
 #    User: username (email@example.com)
 #    Expires: 2025-10-30T14:17:13
@@ -279,13 +280,13 @@ python bioclin_auth.py status
 
 ```bash
 # Check if logged in
-python bioclin_auth.py status
+python src/bioclin_auth.py status
 
 # Logout (e.g., to switch accounts)
-python bioclin_auth.py logout
+python src/bioclin_auth.py logout
 
 # Login again
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 ```
 
 ## Architecture

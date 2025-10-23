@@ -16,7 +16,7 @@ cd bioclin-mcp
 # 2. Authenticate (on host machine)
 pip install playwright httpx
 playwright install chromium
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 # Browser opens → log in → session saved to ~/.bioclin_session.json
 
 # 3. Build and run with Docker
@@ -39,11 +39,11 @@ pip install -r requirements.txt
 playwright install chromium
 
 # 2. Authenticate
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 # Browser opens → log in → done!
 
 # 3. Run server
-fastmcp run bioclin_fastmcp.py
+fastmcp run src/bioclin_fastmcp.py
 ```
 
 ## Features
@@ -59,7 +59,7 @@ fastmcp run bioclin_fastmcp.py
 ### Option 1: Browser Login (Recommended) ⭐
 
 ```bash
-$ python bioclin_auth.py login
+$ python src/bioclin_auth.py login
 
 Choose login method:
   1. Browser (recommended) - Automated login
@@ -83,14 +83,14 @@ Enter choice [1]: 1
 ### Option 2: CLI Login
 
 ```bash
-$ python bioclin_auth.py login
+$ python src/bioclin_auth.py login
 Enter choice [2]: 2
 Email: your@email.com
 Password: ••••••••
 ✅ Login successful!
 ```
 
-**[Full Authentication Guide →](AUTHENTICATION.md)**
+**[Full Authentication Guide →](docs/AUTHENTICATION.md)**
 
 ## Claude Desktop Setup
 
@@ -124,7 +124,7 @@ Edit your Claude Desktop config:
   "mcpServers": {
     "bioclin": {
       "command": "fastmcp",
-      "args": ["run", "/absolute/path/to/bioclin-mcp/bioclin_fastmcp.py"]
+      "args": ["run", "/absolute/path/to/bioclin-mcp/src/bioclin_fastmcp.py"]
     }
   }
 }
@@ -183,7 +183,7 @@ Define reusable analysis types | Configure parameters
 ### Google Cloud Storage (3 tools)
 Generate signed URLs | Download files | Access reports
 
-**Total: 46+ tools** | [See complete list in code →](bioclin_fastmcp.py)
+**Total: 46+ tools** | [See complete list in code →](src/bioclin_fastmcp.py)
 
 ## Usage Examples
 
@@ -231,17 +231,34 @@ Claude: [Checks run status]
 ```
 bioclin-mcp/
 ├── README.md                    # This file
-├── AUTHENTICATION.md            # Detailed auth guide with diagrams
-├── DOCKER.md                    # Docker deployment guide
+├── requirements.txt             # Python dependencies
+├── Dockerfile                   # Docker image definition
+├── docker-compose.yml           # Docker Compose config
 │
-├── bioclin_fastmcp.py          # Main MCP server (FastMCP)
-├── bioclin_auth.py             # Authentication script (Playwright)
-├── auto_browser_auth.py        # Standalone auth script
-├── run_bioclin.sh              # Convenience launcher
+├── src/                         # Source code
+│   ├── bioclin_fastmcp.py      # Main MCP server (FastMCP)
+│   ├── bioclin_auth.py         # Authentication script (Playwright)
+│   ├── auto_browser_auth.py    # Standalone auth script
+│   ├── bioclin_mcp_server.py   # Legacy MCP server
+│   └── bioclin_schemas.py      # Pydantic schemas
 │
-├── bioclin_mcp_server.py       # Legacy MCP server
-├── bioclin_schemas.py          # Pydantic schemas
-└── requirements.txt            # Python dependencies
+├── docs/                        # Documentation
+│   ├── AUTHENTICATION.md       # Detailed auth guide with diagrams
+│   └── DOCKER.md               # Docker deployment guide
+│
+├── scripts/                     # Utility scripts
+│   ├── run_bioclin.sh          # Convenience launcher
+│   └── build.sh                # Build script
+│
+├── config/                      # Configuration examples
+│   ├── claude-desktop-config.json
+│   └── example_config.json
+│
+├── tests/                       # Test files
+│   └── test_schemas.py
+│
+└── examples/                    # Usage examples
+    └── example_usage.py
 ```
 
 ## Requirements
@@ -289,14 +306,14 @@ pip show playwright
 playwright install chromium
 
 # Or use CLI method
-python bioclin_auth.py login  # Choose option 2
+python src/bioclin_auth.py login  # Choose option 2
 ```
 
 ### Session expires
 
 ```bash
 # Sessions last 7 days - just log in again
-python bioclin_auth.py login
+python src/bioclin_auth.py login
 ```
 
 ### MCP not connecting
@@ -307,7 +324,7 @@ python bioclin_auth.py login
 # Restart Claude Desktop completely
 ```
 
-**[More troubleshooting →](AUTHENTICATION.md#troubleshooting)**
+**[More troubleshooting →](docs/AUTHENTICATION.md#troubleshooting)**
 
 ## Docker Deployment
 
@@ -319,7 +336,7 @@ docker build -t bioclin-mcp:latest .
 docker run -it --rm bioclin-mcp:latest
 ```
 
-**[Full Docker guide →](DOCKER.md)**
+**[Full Docker guide →](docs/DOCKER.md)**
 
 ## Security
 
@@ -340,9 +357,9 @@ Contributions welcome! Please:
 
 ## Documentation
 
-- **[AUTHENTICATION.md](AUTHENTICATION.md)** - Complete auth guide with Mermaid diagrams
-- **[DOCKER.md](DOCKER.md)** - Docker deployment
-- **[bioclin_fastmcp.py](bioclin_fastmcp.py)** - Source code with tool definitions
+- **[AUTHENTICATION.md](docs/AUTHENTICATION.md)** - Complete auth guide with Mermaid diagrams
+- **[DOCKER.md](docs/DOCKER.md)** - Docker deployment
+- **[bioclin_fastmcp.py](src/bioclin_fastmcp.py)** - Source code with tool definitions
 
 ## Version
 
