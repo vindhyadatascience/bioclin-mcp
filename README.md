@@ -1,408 +1,342 @@
-# Bioclin MCP Server
+# Bioclin MCP Server 🧬
 
-A Model Context Protocol (MCP) server for the Bioclin API, providing comprehensive access to bioinformatics workflow management through Claude and other MCP clients.
+A Model Context Protocol (MCP) server for the Bioclin bioinformatics API with **secure automated browser authentication**.
+
+> **Key Feature**: Log in via browser - never expose credentials to the LLM! 🔒
+
+## Quick Start
+
+```bash
+# 1. Install
+git clone https://github.com/vindhyadatascience/bioclin-mcp.git
+cd bioclin-mcp
+pip install fastmcp httpx playwright
+playwright install chromium
+
+# 2. Authenticate
+python bioclin_auth.py login
+# Browser opens → log in → done!
+
+# 3. Run server
+fastmcp run bioclin_fastmcp.py
+
+# 4. Or use convenience script
+./run_bioclin.sh
+```
 
 ## Features
 
-This MCP server provides access to all Bioclin API functionality including:
+- 🔐 **Secure Browser Login** - Automated with Playwright, no credentials to LLM
+- ⚡ **46+ API Tools** - Full Bioclin API coverage
+- 🤖 **Claude Desktop Ready** - Seamless integration
+- 💾 **Session Management** - 7-day persistence
+- 🎯 **FastMCP** - Modern, fast MCP implementation
 
-### Authentication & User Management
-- Login/logout with session management
-- Token validation and refresh
-- User creation and management
-- Password recovery and reset
-- Admin user operations
+## Authentication
 
-### Organization Management
-- Create and manage organizations
-- User-organization relationships
-- Switch active organizations
-- Organization permissions
-
-### Project Management
-- Create and manage analysis projects
-- Configure project parameters
-- Link projects to analysis types
-- Track project runs
-
-### Run Management
-- Create and monitor analysis runs
-- Track run status (PENDING, LAUNCHING, QUEUED, SCHEDULED, RUNNING, SUCCEEDED, FAILED)
-- View run results
-- Manage run parameters
-
-### Analysis Types & Parameters
-- Define reusable analysis types
-- Configure analysis parameters
-- Version management for analysis types
-- Link parameters to Docker images
-
-### Google Cloud Storage Integration
-- Generate signed URLs for file access
-- Download analysis results
-- Access HTML reports
-- Secure file sharing
-
-## Installation
-
-### Option 1: Docker (Recommended for Portability)
-
-The easiest way to run the Bioclin MCP Server is using Docker, which handles all dependencies automatically.
-
-**Quick Start with Docker:**
-```bash
-# Build the image
-docker build -t bioclin-mcp:latest .
-
-# Run the container
-docker run -it --rm \
-  -e BIOCLIN_API_URL="https://bioclin.vindhyadatascience.com/api/v1" \
-  bioclin-mcp:latest
-```
-
-**Or use Docker Compose:**
-```bash
-# Set your API URL
-export BIOCLIN_API_URL="https://bioclin.vindhyadatascience.com/api/v1"
-
-# Start the server
-docker-compose up -d
-```
-
-For detailed Docker instructions, see [DOCKER.md](DOCKER.md)
-
-### Option 2: Local Python Installation
-
-1. Clone this repository or copy the files to your project directory:
+### Option 1: Browser Login (Recommended) ⭐
 
 ```bash
-cd /path/to/your/project
+$ python bioclin_auth.py login
+
+Choose login method:
+  1. Browser (recommended) - Automated login
+  2. CLI - Enter credentials in terminal
+
+Enter choice [1]: 1
+
+🌐 Bioclin Automated Browser Login
+✓ Browser window opens
+✓ You log in on official Bioclin website
+✓ Session captured automatically
+✓ Browser closes
+✅ Done! Session saved for 7 days
 ```
 
-2. Install dependencies:
+**Why this is secure:**
+- ✅ Credentials entered directly on bioclin.vindhyadatascience.com
+- ✅ Never exposed to LLM or stored in plaintext
+- ✅ Only session tokens saved locally
+
+### Option 2: CLI Login
 
 ```bash
-pip install -r requirements.txt
+$ python bioclin_auth.py login
+Enter choice [2]: 2
+Email: your@email.com
+Password: ••••••••
+✅ Login successful!
 ```
 
-## Configuration
+**[Full Authentication Guide →](AUTHENTICATION.md)**
 
-Set the Bioclin API base URL (optional, defaults to https://bioclin.vindhyadatascience.com/api/v1):
+## Claude Desktop Setup
 
-```bash
-export BIOCLIN_API_URL="https://your-bioclin-instance.com/api/v1"
-```
+### 1. Add to Configuration
 
-## Running the Server
-
-### As a Standalone Server (Python)
-
-```bash
-python bioclin_mcp_server.py
-```
-
-### As a Docker Container
-
-```bash
-docker run -it --rm \
-  -e BIOCLIN_API_URL="https://bioclin.vindhyadatascience.com/api/v1" \
-  bioclin-mcp:latest
-```
-
-See [DOCKER.md](DOCKER.md) for more Docker options.
-
-### With Claude Desktop
-
-Add to your Claude Desktop configuration file:
+Edit your Claude Desktop config:
 
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
 **Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
 
-#### Using Python (Local Installation):
 ```json
 {
   "mcpServers": {
     "bioclin": {
-      "command": "python",
-      "args": ["/path/to/bioclin-mcp/bioclin_mcp_server.py"],
-      "env": {
-        "BIOCLIN_API_URL": "https://bioclin.vindhyadatascience.com/api/v1"
-      }
+      "command": "fastmcp",
+      "args": ["run", "/absolute/path/to/bioclin-mcp/bioclin_fastmcp.py"]
     }
   }
 }
 ```
 
-#### Using Docker (Recommended):
-```json
-{
-  "mcpServers": {
-    "bioclin": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "--rm",
-        "-e", "BIOCLIN_API_URL=https://bioclin.vindhyadatascience.com/api/v1",
-        "bioclin-mcp:latest"
-      ]
-    }
-  }
-}
+### 2. Restart Claude Desktop
+
+### 3. Test It
+
+Ask Claude:
+- *"Do I have an active Bioclin session?"*
+- *"Show me my Bioclin projects"*
+
+If not authenticated, Claude will trigger the browser login automatically!
+
+```mermaid
+sequenceDiagram
+    User->>Claude: Show my projects
+    Claude->>MCP: bioclin_check_session()
+    MCP-->>Claude: not_authenticated
+    Claude->>MCP: bioclin_browser_login_auto()
+    MCP->>Browser: Open & wait for login
+    Browser-->>User: Login page
+    User->>Browser: Enter credentials
+    Browser->>MCP: Session captured!
+    Claude->>MCP: bioclin_list_projects()
+    MCP-->>Claude: Projects data
+    Claude-->>User: Here are your projects...
 ```
-
-### With Other MCP Clients
-
-The server uses stdio transport and can be integrated with any MCP-compatible client.
 
 ## Available Tools
 
-### Authentication (4 tools)
-- `bioclin_login` - Login with username/password
-- `bioclin_logout` - Logout and clear session
-- `bioclin_validate_token` - Validate current token
-- `bioclin_refresh_token` - Refresh access token
+### Authentication & Session
+- `bioclin_check_session()` - Check if authenticated
+- `bioclin_browser_login_auto()` - Automated browser login
+- `bioclin_login()` - Direct credential login (fallback)
+- `bioclin_logout()` - Clear session
+- `bioclin_token_validate()` - Validate token
+- `bioclin_token_refresh()` - Refresh token
 
 ### User Management (11 tools)
-- `bioclin_create_user` - Create new user
-- `bioclin_create_admin` - Create admin user
-- `bioclin_get_users` - List all users (admin)
-- `bioclin_get_user_me` - Get current user info
-- `bioclin_get_user_context` - Get user context with orgs
-- `bioclin_update_user_me` - Update current user
-- `bioclin_set_user_admin` - Set admin status (admin)
-- `bioclin_set_user_active` - Set active status (admin)
-- `bioclin_recover_password` - Send recovery email
-- `bioclin_reset_password` - Reset password with token
-- `bioclin_delete_user` - Delete user (admin)
+Create, read, update users | Admin operations | Password recovery
 
 ### Organization Management (6 tools)
-- `bioclin_create_org` - Create organization
-- `bioclin_get_orgs` - List all organizations
-- `bioclin_get_org` - Get organization by ID
-- `bioclin_get_user_orgs` - Get user's organizations
-- `bioclin_update_active_org` - Switch active org
-- `bioclin_add_user_to_org` - Add user to org
+Create orgs | Manage members | Switch active org
 
-### Permission Management (2 tools)
-- `bioclin_get_roles` - Get all roles
-- `bioclin_get_permissions` - Get all permissions
-
-### Parameter Management (4 tools)
-- `bioclin_create_param` - Create parameter
-- `bioclin_get_params` - List parameters
-- `bioclin_update_param` - Update parameter
-- `bioclin_delete_param` - Delete parameter
-
-### Analysis Type Management (4 tools)
-- `bioclin_create_analysis_type` - Create analysis type
-- `bioclin_get_analysis_types` - List analysis types
-- `bioclin_update_analysis_type` - Update analysis type
-- `bioclin_delete_analysis_type` - Delete analysis type
-
-### Project Management (5 tools)
-- `bioclin_create_project` - Create project
-- `bioclin_get_projects` - List all projects
-- `bioclin_get_user_projects` - List user's projects
-- `bioclin_get_project` - Get project by ID
-- `bioclin_delete_project` - Delete project
+### Project Management (8 tools)
+Create projects | List projects | Configure parameters
 
 ### Run Management (5 tools)
-- `bioclin_create_run` - Create analysis run
-- `bioclin_get_runs` - List all runs
-- `bioclin_get_runs_by_project` - List runs by project
-- `bioclin_get_runs_by_org` - List runs by organization
-- `bioclin_delete_run` - Delete run
+Create runs | Track status | View results
+
+### Analysis Types & Parameters (8 tools)
+Define reusable analysis types | Configure parameters
 
 ### Google Cloud Storage (3 tools)
-- `bioclin_generate_signed_url` - Generate signed URL
-- `bioclin_get_html_report` - Get HTML report
-- `bioclin_download_file` - Download file
+Generate signed URLs | Download files | Access reports
 
-**Total: 44 tools**
+**Total: 46+ tools** | [See complete list in code →](bioclin_fastmcp.py)
 
 ## Usage Examples
 
-### Example 1: Login and Get User Info
+### Example 1: First Time Use
 
 ```
-User: Login to Bioclin with username "researcher@example.com" and password "mypassword"
+You: "I need to work with Bioclin"
 
-Claude: [Uses bioclin_login tool]
+Claude: Let me check if you're authenticated...
+        [Checks session - not authenticated]
+        I'll start the automated login process.
+        [Terminal window opens with browser]
 
-User: Show me my user information
+You: [Log in via browser]
 
-Claude: [Uses bioclin_get_user_me tool]
+Claude: Perfect! You're now authenticated.
+        What would you like to do with Bioclin?
+
+You: "Show me my projects"
+
+Claude: [Lists all your projects with details]
 ```
 
-### Example 2: Create and Run a Project
+### Example 2: Create and Run Analysis
 
 ```
-User: Create a new project called "RNA-Seq Analysis" using analysis type ID "123e4567-e89b-12d3-a456-426614174000"
+You: "Create a project called 'RNA-Seq Study'"
 
-Claude: [Uses bioclin_create_project tool]
+Claude: [Creates project]
+        Created project "RNA-Seq Study" (ID: abc-123)
 
-User: Create a run for this project named "Sample Batch 1"
+You: "Create a run for this project"
 
-Claude: [Uses bioclin_create_run tool]
+Claude: [Creates run]
+        Run created successfully. Status: PENDING
 
-User: Check the status of all runs for this project
+You: "What's the status now?"
 
-Claude: [Uses bioclin_get_runs_by_project tool]
+Claude: [Checks run status]
+        Status: RUNNING - Your analysis is in progress
 ```
 
-### Example 3: Organization Management
-
-```
-User: Create an organization called "Research Lab" with description "Genomics research laboratory"
-
-Claude: [Uses bioclin_create_org tool]
-
-User: Add user "colleague@example.com" to this organization
-
-Claude: [Uses bioclin_add_user_to_org tool]
-
-User: Switch my active organization to this new one
-
-Claude: [Uses bioclin_update_active_org tool]
-```
-
-### Example 4: Analysis Type Configuration
-
-```
-User: Create a parameter for "Read Length" with description "Length of sequencing reads"
-
-Claude: [Uses bioclin_create_param tool]
-
-User: Create an analysis type for "RNA-Seq" using this parameter
-
-Claude: [Uses bioclin_create_analysis_type tool]
-```
-
-## Schema Documentation
-
-All API schemas are defined in `bioclin_schemas.py` using Pydantic models. Key schemas include:
-
-- **User Schemas**: UserCreate, UserPublic, UserPrivate
-- **Organization Schemas**: OrgCreate, OrgPublic, OrgPrivate
-- **Project Schemas**: ProjectCreate, ProjectPublic, ProjectParamCreate
-- **Run Schemas**: RunCreate, Run, RunPrivate, RunStatus (enum)
-- **Analysis Schemas**: AnalysisTypeCreate, AnalysisType, AnalysisTypePrivate
-- **Parameter Schemas**: ParamCreate, Param, ParamUpdate
-
-## Architecture
-
-### Components
-
-1. **bioclin_schemas.py** - Pydantic models for all API data structures
-2. **bioclin_mcp_server.py** - Main MCP server implementation
-   - `BioclinClient` - HTTP client with session management
-   - `BioclinMCPServer` - MCP server with tool handlers
-
-### Session Management
-
-The server maintains:
-- HTTP cookies for session persistence
-- CSRF token handling for secure requests
-- Automatic token refresh capabilities
-
-### Error Handling
-
-All tools return structured JSON responses with:
-- Success data on 2xx responses
-- Error messages with HTTP status codes on failures
-- Detailed validation errors for invalid inputs
-
-## Security Considerations
-
-1. **Authentication**: All authenticated endpoints require valid session cookies
-2. **CSRF Protection**: CSRF tokens are automatically managed
-3. **Admin Operations**: Certain operations require admin privileges
-4. **Password Security**: Minimum 8 characters enforced
-5. **Session Management**: Secure cookie-based sessions
-
-## Development
-
-### File Structure
+## File Structure
 
 ```
 bioclin-mcp/
-├── bioclin_schemas.py       # Pydantic schemas
-├── bioclin_mcp_server.py    # MCP server implementation
-├── requirements.txt         # Python dependencies
-└── README.md               # This file
+├── README.md                    # This file
+├── AUTHENTICATION.md            # Detailed auth guide with diagrams
+├── DOCKER.md                    # Docker deployment guide
+│
+├── bioclin_fastmcp.py          # Main MCP server (FastMCP)
+├── bioclin_auth.py             # Authentication script (Playwright)
+├── auto_browser_auth.py        # Standalone auth script
+├── run_bioclin.sh              # Convenience launcher
+│
+├── bioclin_mcp_server.py       # Legacy MCP server
+├── bioclin_schemas.py          # Pydantic schemas
+└── requirements.txt            # Python dependencies
 ```
 
-### Adding New Tools
+## Requirements
 
-To add a new tool:
+```txt
+fastmcp>=0.2.0
+httpx>=0.24.0
+playwright>=1.40.0      # For automated browser login
+pydantic>=2.0.0
+```
 
-1. Add the tool definition in `list_tools()` handler
-2. Add the request handler in `_handle_tool_call()` method
-3. Update this README with the new tool documentation
+## Session Management
 
-### Testing
+Sessions are stored in `~/.bioclin_session.json`:
 
-Test individual tools using an MCP client or by running:
+```json
+{
+  "cookies": { "access_token": "...", "csrf_token": "...", "refresh_token": "..." },
+  "user": { "email": "user@example.com", "username": "username", "id": "uuid" },
+  "created_at": "2025-10-23T14:17:13",
+  "expires_at": "2025-10-30T14:17:13"
+}
+```
+
+- **Permissions**: `0o600` (owner-only read/write)
+- **Expiration**: 7 days
+- **Commands**: `status`, `login`, `logout`
+
+## Environment Variables
 
 ```bash
-# Set up environment
-export BIOCLIN_API_URL="http://localhost:8000"
-
-# Run the server
-python bioclin_mcp_server.py
+# Optional: Override default API URL
+export BIOCLIN_API_URL="https://your-instance.com/api/v1"
 ```
+
+Default: `https://bioclin.vindhyadatascience.com/api/v1`
 
 ## Troubleshooting
 
-### Connection Issues
+### Browser doesn't open
 
-- Verify `BIOCLIN_API_URL` is set correctly
-- Check network connectivity to Bioclin API
-- Verify API server is running
+```bash
+# Check Playwright
+pip show playwright
+playwright install chromium
 
-### Authentication Issues
-
-- Ensure credentials are correct
-- Check if session cookies are being persisted
-- Verify CSRF token handling
-
-### Tool Execution Errors
-
-- Check tool input parameters match schema
-- Verify user has required permissions
-- Check API server logs for backend errors
-
-## API Reference
-
-For complete API documentation, refer to the OpenAPI specification at your Bioclin instance:
+# Or use CLI method
+python bioclin_auth.py login  # Choose option 2
 ```
-https://your-bioclin-instance.com/docs
+
+### Session expires
+
+```bash
+# Sessions last 7 days - just log in again
+python bioclin_auth.py login
 ```
+
+### MCP not connecting
+
+```bash
+# Verify config path is absolute
+# Check Claude Desktop config syntax
+# Restart Claude Desktop completely
+```
+
+**[More troubleshooting →](AUTHENTICATION.md#troubleshooting)**
+
+## Docker Deployment
+
+```bash
+# Build
+docker build -t bioclin-mcp:latest .
+
+# Run
+docker run -it --rm bioclin-mcp:latest
+```
+
+**[Full Docker guide →](DOCKER.md)**
+
+## Security
+
+- 🔒 Credentials entered only on official Bioclin website
+- 🔒 Never logged or exposed to LLM
+- 🔒 Session file secured with `0o600` permissions
+- 🔒 Auto-expiration after 7 days
+- 🔒 HTTPS-only API communication
+- 🔒 Token-based authentication (no password storage)
+
+## Contributing
+
+Contributions welcome! Please:
+- Maintain security best practices
+- Add tests for new features
+- Update documentation
+- Follow existing code style
+
+## Documentation
+
+- **[AUTHENTICATION.md](AUTHENTICATION.md)** - Complete auth guide with Mermaid diagrams
+- **[DOCKER.md](DOCKER.md)** - Docker deployment
+- **[bioclin_fastmcp.py](bioclin_fastmcp.py)** - Source code with tool definitions
+
+## Version
+
+**v1.1.0** - Automated Browser Authentication
+
+### Changelog
+
+**v1.1.0** (2025-10-23)
+- ✨ Automated browser-based authentication with Playwright
+- ✨ New `bioclin_browser_login_auto()` MCP tool
+- ✨ macOS Terminal.app integration for visible GUI
+- 🔒 Enhanced security - no credential exposure to LLM
+- 🎯 Seamless Claude Desktop integration
+- 📝 Comprehensive documentation with Mermaid diagrams
+
+**v1.0.0** (Initial Release)
+- 🎉 Initial Bioclin MCP server
+- 46+ API tools
+- FastMCP implementation
+- Basic authentication support
 
 ## License
 
-This MCP server implementation is provided as-is for use with the Bioclin API.
+MIT License
 
 ## Support
 
-For issues specific to:
-- **MCP Server**: Create an issue in this repository
+- **Issues**: [GitHub Issues](https://github.com/vindhyadatascience/bioclin-mcp/issues)
 - **Bioclin API**: Contact your Bioclin administrator
-- **MCP Protocol**: See https://modelcontextprotocol.io
+- **MCP Protocol**: https://modelcontextprotocol.io
 
-## Version History
+---
 
-- **1.1.0** (2025-10-23) - Automated Browser Authentication
-  - ✨ Added automated browser-based authentication with Playwright
-  - ✨ New `bioclin_browser_login_auto()` MCP tool
-  - ✨ macOS Terminal.app integration for visible GUI
-  - 🔒 Enhanced security - credentials never exposed to LLM
-  - 🎯 Seamless Claude Desktop integration
-  - 📝 Comprehensive authentication documentation
+Made with ❤️ for bioinformatics research
 
-- **1.0.0** (2025-01-20) - Initial release
-  - Full API coverage (44 tools)
-  - Session management
-  - CSRF protection
-  - Comprehensive schema support
+**🔒 Secure by Design** | **⚡ Fast & Modern** | **🤖 Claude Desktop Ready**
