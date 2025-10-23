@@ -1,26 +1,84 @@
 [project]
 name = "bioclin-mcp"
-version = "1.0.0"
-description = "Model Context Protocol server for Bioclin API"
-authors = [
-    {name = "Bioclin Team"}
-]
+version = "1.1.1"
+description = "A Model Context Protocol (MCP) server for the Bioclin bioinformatics API"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-    "mcp>=0.9.0",
-    "httpx>=0.25.0",
-    "pydantic>=2.0.0",
-    "pydantic[email]>=2.0.0",
-    "python-json-logger>=2.0.0",
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Vindhya Data Science", email = "support@vindhyadatascience.com" }
+]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "bioclin",
+    "bioinformatics",
+    "claude",
+    "fastmcp",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-[project.scripts]
-bioclin-mcp = "bioclin_mcp_server:main"
+dependencies = [
+    "fastmcp>=0.2.0",
+    "httpx>=0.24.0",
+    "playwright>=1.40.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/vindhyadatascience/bioclin-mcp"
+Documentation = "https://github.com/vindhyadatascience/bioclin-mcp#readme"
+Repository = "https://github.com/vindhyadatascience/bioclin-mcp"
+Issues = "https://github.com/vindhyadatascience/bioclin-mcp/issues"
 
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.setuptools]
-py-modules = ["bioclin_mcp_server", "bioclin_schemas"]
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+]
+ignore = [
+    "E501", # line too long (handled by formatter)
+    "B008", # do not perform function calls in argument defaults
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

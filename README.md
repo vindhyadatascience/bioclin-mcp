@@ -6,6 +6,11 @@ A Model Context Protocol (MCP) server for the Bioclin bioinformatics API with **
 
 ## Quick Start
 
+**Choose your installation method:**
+- 🐳 **[Docker](#option-1-docker-recommended-)** - Best for production, complete isolation
+- ⚡ **[uv (Astral)](#option-2-local-python-with-uv)** - Ultra-fast, modern Python tooling ([Full uv guide →](QUICKSTART_UV.md))
+- 🐍 **[pip/venv](#alternative-traditional-pipvenv-installation)** - Traditional Python setup
+
 ### Option 1: Docker (Recommended) 🐳
 
 **Docker-only setup - no Python installation required!**
@@ -39,28 +44,59 @@ docker run -it --rm \
 
 **Alternative: Browser-based login (requires Python on host)**
 ```bash
-# If you prefer browser login, install Python deps on your Mac:
-pip install playwright httpx
-playwright install chromium
+# If you prefer browser login, install Python deps on your Mac with uv:
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install playwright
+uv tool install httpx
+uvx playwright install chromium
 python src/bioclin_auth.py login  # Browser opens
 ```
 
-### Option 2: Local Python
+### Option 2: Local Python (with uv)
+
+```bash
+# 1. Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Clone and setup
+git clone https://github.com/vindhyadatascience/bioclin-mcp.git
+cd bioclin-mcp
+
+# 3. Install dependencies with uv
+uv sync
+uv run playwright install chromium
+
+# 4. Authenticate
+uv run python src/bioclin_auth.py login
+# Browser opens → log in → done!
+
+# 5. Run server
+uv run fastmcp run src/bioclin_fastmcp.py
+```
+
+<details>
+<summary><b>Alternative: Traditional pip/venv installation</b></summary>
 
 ```bash
 # 1. Install
 git clone https://github.com/vindhyadatascience/bioclin-mcp.git
 cd bioclin-mcp
+
+# 2. Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 3. Install dependencies
 pip install -r requirements.txt
 playwright install chromium
 
-# 2. Authenticate
+# 4. Authenticate
 python src/bioclin_auth.py login
-# Browser opens → log in → done!
 
-# 3. Run server
+# 5. Run server
 fastmcp run src/bioclin_fastmcp.py
 ```
+</details>
 
 ## Features
 
@@ -134,7 +170,26 @@ Edit your Claude Desktop config:
 }
 ```
 
-**Using Local Python**:
+**Using Local Python with uv**:
+```json
+{
+  "mcpServers": {
+    "bioclin": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/bioclin-mcp",
+        "run",
+        "fastmcp",
+        "run",
+        "src/bioclin_fastmcp.py"
+      ]
+    }
+  }
+}
+```
+
+**Using Local Python (traditional)**:
 ```json
 {
   "mcpServers": {
@@ -279,12 +334,20 @@ bioclin-mcp/
 
 ## Requirements
 
+**Python:** 3.11 or higher
+
+**Dependencies** (automatically installed via `uv sync` or `pip install -r requirements.txt`):
 ```txt
 fastmcp>=0.2.0
 httpx>=0.24.0
 playwright>=1.40.0      # For automated browser login
 pydantic>=2.0.0
 ```
+
+**Installation methods:**
+- **uv** (recommended): `uv sync` - Fast, modern, automatic
+- **pip**: `pip install -r requirements.txt` - Traditional
+- **Docker**: No local Python needed - everything in container
 
 ## Session Management
 
