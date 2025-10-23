@@ -172,6 +172,34 @@ async def bioclin_browser_login_auto() -> dict:
     Returns:
         dict: Login process status and instructions
     """
+    # Check if running in Docker
+    if Path("/.dockerenv").exists() or os.environ.get("DOCKER_CONTAINER"):
+        return {
+            "status": "docker_detected",
+            "message": "Browser login cannot run inside Docker container",
+            "instructions": [
+                "You are running the MCP server in Docker. To authenticate:",
+                "",
+                "Option 1 - Docker CLI Login (Recommended):",
+                "  Run this command on your host machine:",
+                "  docker run -it --rm \\",
+                "    -v ~/.bioclin_session.json:/root/.bioclin_session.json \\",
+                "    bioclin-mcp:latest \\",
+                "    sh -c \"echo '2' | python src/bioclin_auth.py login\"",
+                "",
+                "Option 2 - Browser Login (requires Python on host):",
+                "  1. Install Playwright on your Mac: pip install playwright httpx",
+                "  2. Install Chromium: playwright install chromium",
+                "  3. Run: python src/bioclin_auth.py login",
+                "  4. Browser will open - log in normally",
+                "",
+                "After authentication, restart Claude Desktop to use the new session.",
+                "",
+                "Session will be saved to ~/.bioclin_session.json and mounted into Docker."
+            ],
+            "docker_login_script": "./scripts/docker-cli-login.sh"
+        }
+
     if not BIOCLIN_AUTH_SCRIPT.exists():
         return {
             "status": "error",
