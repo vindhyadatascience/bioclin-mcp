@@ -393,6 +393,14 @@ For issues specific to:
 
 ## Version History
 
+- **1.1.0** (2025-10-23) - Automated Browser Authentication
+  - ✨ Added automated browser-based authentication with Playwright
+  - ✨ New `bioclin_browser_login_auto()` MCP tool
+  - ✨ macOS Terminal.app integration for visible GUI
+  - 🔒 Enhanced security - credentials never exposed to LLM
+  - 🎯 Seamless Claude Desktop integration
+  - 📝 Comprehensive authentication documentation
+
 - **1.0.0** (2025-01-20) - Initial release
   - Full API coverage (44 tools)
   - Session management
