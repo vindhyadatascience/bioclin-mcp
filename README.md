@@ -308,22 +308,19 @@ bioclin-mcp/
 │
 ├── src/                         # Source code
 │   ├── bioclin_fastmcp.py      # Main MCP server (FastMCP)
-│   ├── bioclin_auth.py         # Authentication script (Playwright)
-│   ├── auto_browser_auth.py    # Standalone auth script
+│   ├── bioclin_auth.py         # Authentication (Browser + CLI)
 │   ├── bioclin_mcp_server.py   # Legacy MCP server
 │   └── bioclin_schemas.py      # Pydantic schemas
 │
 ├── docs/                        # Documentation
-│   ├── AUTHENTICATION.md       # Detailed auth guide with diagrams
-│   └── DOCKER.md               # Docker deployment guide
+│   ├── AUTHENTICATION.md       # Browser/CLI authentication guide
+│   └── DOCKER_AUTH.md          # Docker-specific authentication
 │
 ├── scripts/                     # Utility scripts
-│   ├── run_bioclin.sh          # Convenience launcher
-│   └── build.sh                # Build script
+│   └── build.sh                # Docker build helper
 │
-├── config/                      # Configuration examples
-│   ├── claude-desktop-config.json
-│   └── example_config.json
+├── config/                      # Claude Desktop configuration
+│   └── claude-desktop-config.json  # All 3 methods (Docker/uv/pip)
 │
 ├── tests/                       # Test files
 │   └── test_schemas.py

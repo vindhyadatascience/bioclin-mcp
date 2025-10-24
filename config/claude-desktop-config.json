@@ -1,12 +1,35 @@
 {
   "mcpServers": {
-    "bioclin": {
+    "bioclin-docker": {
+      "comment": "Docker method (recommended for production)",
       "command": "docker",
       "args": [
         "run",
         "-i",
         "--rm",
+        "-v",
+        "${HOME}/.bioclin_session.json:/root/.bioclin_session.json:ro",
         "bioclin-mcp:latest"
+      ]
+    },
+    "bioclin-uv": {
+      "comment": "uv method (recommended for development - fastest)",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/ABSOLUTE/PATH/TO/bioclin-mcp",
+        "run",
+        "fastmcp",
+        "run",
+        "src/bioclin_fastmcp.py"
+      ]
+    },
+    "bioclin-pip": {
+      "comment": "Traditional pip/venv method",
+      "command": "fastmcp",
+      "args": [
+        "run",
+        "/ABSOLUTE/PATH/TO/bioclin-mcp/src/bioclin_fastmcp.py"
       ]
     }
   }

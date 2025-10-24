@@ -67,10 +67,8 @@ python bioclin_auth.py login --browser
 
 ### 3. Session File Validation
 
-**Files**:
-- `docker-login.sh`
-- `scripts/docker-cli-login.sh`
-- `scripts/docker-login.sh`
+**File**:
+- `docker-login.sh` (root directory - consolidated helper)
 
 Added pre-flight checks to ensure session file exists as a **file** (not directory):
 
@@ -215,11 +213,10 @@ docker run --rm \
    - Session file validation
    - Colored output
 
-3. **scripts/docker-cli-login.sh**
-   - Lines 10-19: Added session file validation
-
-4. **scripts/docker-login.sh**
-   - Lines 4-12: Added session file validation
+3. **docker-login.sh**
+   - Consolidated authentication helper script
+   - Session file validation
+   - Environment variable support
 
 5. **README.md**
    - Updated Quick Start section

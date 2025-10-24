@@ -180,25 +180,24 @@ async def bioclin_browser_login_auto() -> dict:
             "instructions": [
                 "You are running the MCP server in Docker. To authenticate:",
                 "",
-                "Option 1 - Docker CLI Login (Recommended):",
-                "  Run this command in your terminal:",
-                "  ./scripts/docker-cli-login.sh",
+                "Option 1 - Interactive Helper (Recommended):",
+                "  ./docker-login.sh",
                 "",
-                "  Or manually:",
-                "  docker run -it --rm \\",
+                "Option 2 - Environment Variables:",
+                "  docker run --rm \\",
+                "    -e BIOCLIN_EMAIL='your@email.com' \\",
+                "    -e BIOCLIN_PASSWORD='your-password' \\",
                 "    -v ~/.bioclin_session.json:/root/.bioclin_session.json \\",
                 "    bioclin-mcp:latest \\",
-                "    python -c \"import sys; sys.path.insert(0, '/app/src'); from bioclin_auth import login_cli; login_cli()\"",
+                "    python src/bioclin_auth.py login --cli",
                 "",
-                "Option 2 - Browser Login (requires Python on host):",
-                "  1. Install Playwright: pip install playwright httpx",
-                "  2. Install Chromium: playwright install chromium",
-                "  3. Run: python src/bioclin_auth.py login",
-                "  4. Browser will open - log in normally",
+                "Option 3 - Browser Login (requires uv/Python on host):",
+                "  uv run python src/bioclin_auth.py login",
+                "  # OR: python src/bioclin_auth.py login",
                 "",
                 "After authentication, restart Claude Desktop to use the new session."
             ],
-            "docker_login_script": "./scripts/docker-cli-login.sh"
+            "docker_login_script": "./docker-login.sh"
         }
 
     if not BIOCLIN_AUTH_SCRIPT.exists():
