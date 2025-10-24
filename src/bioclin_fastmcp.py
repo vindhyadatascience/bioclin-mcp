@@ -3,12 +3,13 @@
 Bioclin FastMCP Server
 A simplified Model Context Protocol server for the Bioclin API using FastMCP
 
-This server provides 46 tools to interact with the Bioclin API including:
+This server provides 49 tools to interact with the Bioclin API including:
 - User authentication and management (6 tools)
 - Organization management
 - Project management
 - Run management
 - Parameter and analysis type management
+- File upload operations (3 tools)
 - Google Cloud Storage operations
 """
 
@@ -1217,6 +1218,161 @@ async def bioclin_delete_run(run_id: str, ctx: Context) -> dict:
         dict: Deletion status
     """
     return await bioclin_request(ctx, "DELETE", f"/project/runs/{run_id}")
+
+
+@mcp.tool()
+async def bioclin_upload_file_to_run(
+    run_id: str,
+    file_path: str,
+    ctx: Context = None
+) -> dict:
+    """
+    Upload a file to a specific run
+
+    Args:
+        run_id: UUID of the run to upload to
+        file_path: Local path to the file to upload
+
+    Returns:
+        dict: Upload status with file information
+    """
+    from pathlib import Path
+
+    file_path_obj = Path(file_path)
+    if not file_path_obj.exists():
+        return {
+            "status": "error",
+            "message": f"File not found: {file_path}"
+        }
+
+    # Prepare multipart file upload
+    files = {
+        "file": (file_path_obj.name, open(file_path_obj, "rb"))
+    }
+
+    data = {"run_id": run_id}
+
+    try:
+        # Load session
+        stored_session = load_stored_session()
+        if stored_session:
+            cookies = stored_session.get("cookies", {})
+            csrf_token = stored_session.get("csrf_token")
+        else:
+            cookies = {}
+            csrf_token = None
+
+        headers = {}
+        if csrf_token:
+            headers["X-CSRF-Token"] = csrf_token
+
+        url = f"{BIOCLIN_API_URL}/project/upload_file_to_run"
+
+        async with httpx.AsyncClient(timeout=300.0, follow_redirects=True) as client:
+            response = await client.post(
+                url,
+                files=files,
+                data=data,
+                cookies=cookies,
+                headers=headers
+            )
+            response.raise_for_status()
+            return response.json()
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Upload failed: {str(e)}"
+        }
+    finally:
+        # Close the file
+        if 'files' in locals():
+            files["file"][1].close()
+
+
+@mcp.tool()
+async def bioclin_file_upload(
+    file_path: str,
+    ctx: Context = None
+) -> dict:
+    """
+    Generic file upload endpoint
+
+    Args:
+        file_path: Local path to the file to upload
+
+    Returns:
+        dict: Upload status with file information
+    """
+    from pathlib import Path
+
+    file_path_obj = Path(file_path)
+    if not file_path_obj.exists():
+        return {
+            "status": "error",
+            "message": f"File not found: {file_path}"
+        }
+
+    # Prepare multipart file upload
+    files = {
+        "file": (file_path_obj.name, open(file_path_obj, "rb"))
+    }
+
+    try:
+        # Load session
+        stored_session = load_stored_session()
+        if stored_session:
+            cookies = stored_session.get("cookies", {})
+            csrf_token = stored_session.get("csrf_token")
+        else:
+            cookies = {}
+            csrf_token = None
+
+        headers = {}
+        if csrf_token:
+            headers["X-CSRF-Token"] = csrf_token
+
+        url = f"{BIOCLIN_API_URL}/file_upload"
+
+        async with httpx.AsyncClient(timeout=300.0, follow_redirects=True) as client:
+            response = await client.post(
+                url,
+                files=files,
+                cookies=cookies,
+                headers=headers
+            )
+            response.raise_for_status()
+            return response.json()
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Upload failed: {str(e)}"
+        }
+    finally:
+        # Close the file
+        if 'files' in locals():
+            files["file"][1].close()
+
+
+@mcp.tool()
+async def bioclin_job_status(
+    job_uid: str,
+    ctx: Context = None
+) -> dict:
+    """
+    Check the status of a job
+
+    Args:
+        job_uid: Unique identifier for the job
+
+    Returns:
+        dict: Job status information
+    """
+    return await bioclin_request(
+        ctx,
+        "POST",
+        "/job_status",
+        json={"job_uid": job_uid}
+    )
 
 
 # ============================================================================

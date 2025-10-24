@@ -293,6 +293,23 @@ class RunsPrivate(BaseModel):
     count: int
 
 
+# ========== File Upload Schemas ==========
+
+class FileUploadResponse(BaseModel):
+    status: str
+    message: str
+    file_name: Optional[str] = None
+    file_size: Optional[int] = None
+    run_id: Optional[UUID] = None
+
+
+class JobStatusResponse(BaseModel):
+    status: str
+    job_uid: Optional[str] = None
+    run_id: Optional[UUID] = None
+    details: Optional[dict] = None
+
+
 # ========== OAuth Schemas ==========
 
 class BodyLogin(BaseModel):
